@@ -1,0 +1,253 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .app { max-width: 480px; margin: 0 auto; padding: 1.5rem 1rem 2rem; }
+  .app-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .app-title { font-size: 15px; font-weight: 500; color: var(--color-text-secondary); letter-spacing: 0.03em; }
+  .date-badge { font-size: 12px; color: var(--color-text-tertiary); background: var(--color-background-secondary); padding: 4px 10px; border-radius: 99px; border: 0.5px solid var(--color-border-tertiary); }
+  .quote-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 2rem 1.5rem 1.5rem; margin-bottom: 1rem; position: relative; min-height: 220px; display: flex; flex-direction: column; justify-content: space-between; transition: opacity 0.35s; }
+  .quote-card.fading { opacity: 0; }
+  .quote-mark { font-size: 56px; font-family: var(--font-serif); line-height: 1; color: var(--color-border-secondary); position: absolute; top: 12px; left: 20px; }
+  .quote-text { font-family: var(--font-serif); font-size: 19px; line-height: 1.65; color: var(--color-text-primary); padding-top: 1rem; flex: 1; }
+  .quote-meta { margin-top: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+  .quote-author { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); }
+  .quote-category { font-size: 11px; color: var(--color-text-tertiary); background: var(--color-background-secondary); padding: 3px 8px; border-radius: 99px; border: 0.5px solid var(--color-border-tertiary); }
+  .actions { display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .btn { display: flex; align-items: center; gap: 6px; padding: 0 14px; height: 36px; border-radius: var(--border-radius-md); font-size: 13px; font-weight: 500; cursor: pointer; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); transition: background 0.15s, transform 0.1s; flex: 1; justify-content: center; }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn:active { transform: scale(0.97); }
+  .btn.favorited { color: #D85A30; border-color: #F0997B; background: #FAECE7; }
+  .btn-primary { background: var(--color-text-primary); color: var(--color-background-primary); border-color: var(--color-text-primary); }
+  .btn-primary:hover { opacity: 0.85; background: var(--color-text-primary); }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px; }
+  .favorites-list { display: flex; flex-direction: column; gap: 8px; }
+  .fav-item { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px 14px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .fav-text { font-family: var(--font-serif); font-size: 13px; color: var(--color-text-primary); line-height: 1.5; flex: 1; }
+  .fav-author { font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; }
+  .fav-remove { cursor: pointer; color: var(--color-text-tertiary); font-size: 16px; flex-shrink: 0; padding: 2px; }
+  .fav-remove:hover { color: #D85A30; }
+  .empty-favs { font-size: 13px; color: var(--color-text-tertiary); text-align: center; padding: 1.5rem 0; }
+  .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--color-text-primary); color: var(--color-background-primary); font-size: 13px; padding: 8px 18px; border-radius: 99px; opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none; white-space: nowrap; z-index: 99; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .share-panel { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px 14px; margin-bottom: 1rem; display: none; }
+  .share-panel.open { display: block; }
+  .share-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .share-btn { display: flex; align-items: center; gap: 5px; padding: 0 12px; height: 30px; border-radius: var(--border-radius-md); font-size: 12px; font-weight: 500; cursor: pointer; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); }
+  .share-btn:hover { background: var(--color-background-secondary); }
+  .nav { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1.25rem; gap: 0; }
+  .nav-btn { flex: 1; font-size: 13px; font-weight: 500; padding: 8px 0; background: none; border: none; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; }
+  .nav-btn.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .progress-dots { display: flex; gap: 6px; justify-content: center; margin-top: 1rem; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-border-tertiary); transition: background 0.2s; cursor: pointer; }
+  .dot.active { background: var(--color-text-primary); }
+</style>
+
+<h2 class="sr-only">Quote of the Day — an app to view, favorite, and share inspiring quotes daily.</h2>
+
+<div class="app">
+  <div class="app-header">
+    <span class="app-title"><i class="ti ti-quote" aria-hidden="true"></i> Quote of the day</span>
+    <span class="date-badge" id="date-badge"></span>
+  </div>
+
+  <nav class="nav" role="tablist">
+    <button class="nav-btn active" role="tab" onclick="switchTab('home', this)"><i class="ti ti-home" aria-hidden="true"></i> Home</button>
+    <button class="nav-btn" role="tab" onclick="switchTab('favs', this)"><i class="ti ti-heart" aria-hidden="true"></i> Favorites</button>
+  </nav>
+
+  <div id="tab-home" class="tab-panel active">
+    <div class="quote-card" id="quote-card">
+      <span class="quote-mark" aria-hidden="true">"</span>
+      <p class="quote-text" id="quote-text"></p>
+      <div class="quote-meta">
+        <span class="quote-author" id="quote-author"></span>
+        <span class="quote-category" id="quote-category"></span>
+      </div>
+    </div>
+
+    <div class="progress-dots" id="dots" aria-label="Quote indicator"></div>
+
+    <div class="actions">
+      <button class="btn" id="fav-btn" onclick="toggleFavorite()" aria-label="Save to favorites">
+        <i class="ti ti-heart" aria-hidden="true"></i> Save
+      </button>
+      <button class="btn" onclick="toggleShare()">
+        <i class="ti ti-share" aria-hidden="true"></i> Share
+      </button>
+      <button class="btn btn-primary" onclick="nextQuote()">
+        <i class="ti ti-refresh" aria-hidden="true"></i> New
+      </button>
+    </div>
+
+    <div class="share-panel" id="share-panel">
+      <p class="section-title" style="margin-bottom: 0;"><i class="ti ti-share" aria-hidden="true"></i> Share this quote</p>
+      <div class="share-row">
+        <button class="share-btn" onclick="copyQuote()"><i class="ti ti-copy" aria-hidden="true"></i> Copy</button>
+        <button class="share-btn" onclick="shareVia('twitter')"><i class="ti ti-brand-twitter" aria-hidden="true"></i> Twitter / X</button>
+        <button class="share-btn" onclick="shareVia('whatsapp')"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> WhatsApp</button>
+        <button class="share-btn" onclick="shareVia('native')" id="native-share" style="display:none"><i class="ti ti-send" aria-hidden="true"></i> More…</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-favs" class="tab-panel">
+    <div class="section-title"><i class="ti ti-heart" aria-hidden="true"></i> Saved quotes</div>
+    <div class="favorites-list" id="favs-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const QUOTES = [
+  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs", cat: "Work" },
+  { text: "In the middle of every difficulty lies opportunity.", author: "Albert Einstein", cat: "Resilience" },
+  { text: "It does not matter how slowly you go, as long as you do not stop.", author: "Confucius", cat: "Persistence" },
+  { text: "Life is what happens when you're busy making other plans.", author: "John Lennon", cat: "Life" },
+  { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt", cat: "Dreams" },
+  { text: "Success is not final, failure is not fatal — it is the courage to continue that counts.", author: "Winston Churchill", cat: "Courage" },
+  { text: "Happiness is not something ready-made. It comes from your own actions.", author: "Dalai Lama", cat: "Happiness" },
+  { text: "The only impossible journey is the one you never begin.", author: "Tony Robbins", cat: "Action" },
+  { text: "You miss 100% of the shots you don't take.", author: "Wayne Gretzky", cat: "Action" },
+  { text: "Whether you think you can or you think you can't, you're right.", author: "Henry Ford", cat: "Mindset" },
+  { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt", cat: "Mindset" },
+  { text: "Start where you are. Use what you have. Do what you can.", author: "Arthur Ashe", cat: "Action" },
+  { text: "Everything you've ever wanted is on the other side of fear.", author: "George Addair", cat: "Courage" },
+  { text: "Do one thing every day that scares you.", author: "Eleanor Roosevelt", cat: "Growth" },
+  { text: "The best time to plant a tree was 20 years ago. The second best time is now.", author: "Chinese Proverb", cat: "Wisdom" },
+];
+
+let currentIndex = 0;
+let favorites = [];
+
+function todayIndex() {
+  const d = new Date();
+  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  return seed % QUOTES.length;
+}
+
+function init() {
+  const d = new Date();
+  document.getElementById('date-badge').textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  currentIndex = todayIndex();
+  try { favorites = JSON.parse(sessionStorage.getItem('qotd_favs') || '[]'); } catch(e) { favorites = []; }
+  buildDots();
+  showQuote(currentIndex);
+  if (navigator.share) document.getElementById('native-share').style.display = 'flex';
+}
+
+function buildDots() {
+  const c = document.getElementById('dots');
+  c.innerHTML = '';
+  QUOTES.forEach((_, i) => {
+    const d = document.createElement('span');
+    d.className = 'dot' + (i === currentIndex ? ' active' : '');
+    d.setAttribute('aria-label', 'Quote ' + (i + 1));
+    d.onclick = () => goTo(i);
+    c.appendChild(d);
+  });
+}
+
+function goTo(i) {
+  currentIndex = i;
+  const card = document.getElementById('quote-card');
+  card.classList.add('fading');
+  setTimeout(() => { showQuote(i); card.classList.remove('fading'); }, 300);
+}
+
+function showQuote(i) {
+  const q = QUOTES[i];
+  document.getElementById('quote-text').textContent = q.text;
+  document.getElementById('quote-author').textContent = '— ' + q.author;
+  document.getElementById('quote-category').textContent = q.cat;
+  const isFav = favorites.some(f => f.text === q.text);
+  const fb = document.getElementById('fav-btn');
+  fb.className = 'btn' + (isFav ? ' favorited' : '');
+  fb.innerHTML = isFav ? '<i class="ti ti-heart-filled" aria-hidden="true"></i> Saved' : '<i class="ti ti-heart" aria-hidden="true"></i> Save';
+  document.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
+}
+
+function nextQuote() {
+  goTo((currentIndex + 1) % QUOTES.length);
+}
+
+function toggleFavorite() {
+  const q = QUOTES[currentIndex];
+  const idx = favorites.findIndex(f => f.text === q.text);
+  if (idx >= 0) {
+    favorites.splice(idx, 1);
+    showToast('Removed from favorites');
+  } else {
+    favorites.push(q);
+    showToast('Saved to favorites!');
+  }
+  try { sessionStorage.setItem('qotd_favs', JSON.stringify(favorites)); } catch(e) {}
+  showQuote(currentIndex);
+}
+
+function toggleShare() {
+  const p = document.getElementById('share-panel');
+  p.classList.toggle('open');
+}
+
+function copyQuote() {
+  const q = QUOTES[currentIndex];
+  const text = '"' + q.text + '" — ' + q.author;
+  navigator.clipboard.writeText(text).then(() => showToast('Quote copied!')).catch(() => showToast('Copy failed'));
+}
+
+function shareVia(platform) {
+  const q = QUOTES[currentIndex];
+  const text = '"' + q.text + '" — ' + q.author;
+  if (platform === 'twitter') {
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+  } else if (platform === 'whatsapp') {
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+  } else if (platform === 'native' && navigator.share) {
+    navigator.share({ title: 'Quote of the Day', text }).catch(() => {});
+  }
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  btn.classList.add('active');
+  if (tab === 'favs') renderFavs();
+}
+
+function renderFavs() {
+  const list = document.getElementById('favs-list');
+  if (!favorites.length) {
+    list.innerHTML = '<p class="empty-favs"><i class="ti ti-heart" aria-hidden="true"></i><br>No saved quotes yet.<br>Tap Save on a quote you love.</p>';
+    return;
+  }
+  list.innerHTML = '';
+  favorites.forEach((q, i) => {
+    const item = document.createElement('div');
+    item.className = 'fav-item';
+    item.innerHTML = '<div><p class="fav-text">' + q.text + '</p><p class="fav-author">— ' + q.author + '</p></div><span class="fav-remove" title="Remove" onclick="removeFav(' + i + ')"><i class="ti ti-x" aria-hidden="true"></i></span>';
+    list.appendChild(item);
+  });
+}
+
+function removeFav(i) {
+  favorites.splice(i, 1);
+  try { sessionStorage.setItem('qotd_favs', JSON.stringify(favorites)); } catch(e) {}
+  renderFavs();
+  showQuote(currentIndex);
+  showToast('Removed from favorites');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+init();
+</script>
